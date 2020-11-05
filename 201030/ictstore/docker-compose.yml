@@ -1,0 +1,23 @@
+version: '3'
+services:
+  backend:
+    build: 
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: backend_container
+    tty: true
+    volumes:
+      - ./:/home/ictstore
+    ports:
+      - "5000:5000"
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: vue_img
+    container_name: frontend_container
+    tty: true
+    volumes:
+      - ./:/home/ictstore
+    ports:
+      - "8080:8080"

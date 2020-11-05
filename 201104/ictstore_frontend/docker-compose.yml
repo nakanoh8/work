@@ -1,0 +1,13 @@
+version: '3'
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: vue_img
+    container_name: frontend_container
+    tty: true
+    volumes:
+      - ./:/usr/src/app
+    ports:
+      - "8080:8080"

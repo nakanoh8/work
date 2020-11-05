@@ -8,6 +8,7 @@
     <h2 v-if="randomNum%4==1">Good</h2>
     <h2 v-if="randomNum%4==2">Bad...</h2>
     <h1 v-if="randomNum%4==3">S〇〇ks!!!</h1>
+    <video ref="video" id="video" width="640" height="480" autoplay></video>
   </div>
 </template>
 
@@ -38,6 +39,15 @@ export default {
   },
   created () {
     this.getRandom()
+  },
+  mounted () {
+    let video = document.getElementById('video');
+    // getUserMedia()でカメラ映像の取得
+    let media = navigator.mediaDevices.getUserMedia({ video: true });
+    //リアルタイム再生（ストリーミング）を行うためにビデオタグに流し込む
+    media.then((stream) => {
+        video.srcObject = stream;
+    });
   }
 }
 </script>
