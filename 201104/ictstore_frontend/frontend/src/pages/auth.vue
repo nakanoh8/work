@@ -60,45 +60,45 @@ export default {
     // this.canvasForCapture.setAttribute("height", this.video.height);
     // this.canvasForCapture.strokeStyle = "#FF0000";
     // this.canvasForCaptureContext = this.canvasForCapture.getContext("2d");
-    this.video.addEventListener(
-        'timeupdate',
-        function () {
-            this.canvasForCapture = document.getElementById("canvas-for-capture");
-            this.canvasForCapture.strokeStyle = "#FF0000";
-            this.canvasForCaptureContext = this.canvasForCapture.getContext("2d");
-            this.canvasForCaptureContext.drawImage(document.getElementById("video"), 0, 0, 640, 480);
-            this.img = this.canvasForCapture.toDataURL("image/jpeg").replace(/^.*,/, "")
-            // console.log(this.img)
-            const path = "http://localhost:3000/face_bb";
-            const data = {
-              img: this.img,
-            };
-            // console.log(imgBase64)
-            axios
-              .post(path, data)
-              .then((response) => {
-                const data = response.data;
-                // console.log("####### response.data")
-                // console.log(response.data)
+    // this.video.addEventListener(
+    //     'timeupdate',
+    //     function () {
+    //         this.canvasForCapture = document.getElementById("canvas-for-capture");
+    //         this.canvasForCapture.strokeStyle = "#FF0000";
+    //         this.canvasForCaptureContext = this.canvasForCapture.getContext("2d");
+    //         this.canvasForCaptureContext.drawImage(document.getElementById("video"), 0, 0, 640, 480);
+    //         this.img = this.canvasForCapture.toDataURL("image/jpeg").replace(/^.*,/, "")
+    //         // console.log(this.img)
+    //         const path = "http://localhost:3000/face_bb";
+    //         const data = {
+    //           img: this.img,
+    //         };
+    //         // console.log(imgBase64)
+    //         axios
+    //           .post(path, data)
+    //           .then((response) => {
+    //             const data = response.data;
+    //             // console.log("####### response.data")
+    //             // console.log(response.data)
 
-                this.canvas = document.getElementById("canvas");
-                this.canvas.strokeStyle = "#FF0000";
-                this.canvasContext = this.canvas.getContext("2d");
-                this.canvasContext.clearRect(
-                  0,
-                  0,
-                  640,
-                  480
-                );
-                this.canvasContext.strokeRect(data.x, data.y, data.w, data.h);
-                // this.getFaceBoundingBox(this.img);
-              })
-              .catch((error) => {
-                console.log(error);
-              });
-        },
-        true
-    );
+    //             this.canvas = document.getElementById("canvas");
+    //             this.canvas.strokeStyle = "#FF0000";
+    //             this.canvasContext = this.canvas.getContext("2d");
+    //             this.canvasContext.clearRect(
+    //               0,
+    //               0,
+    //               640,
+    //               480
+    //             );
+    //             this.canvasContext.strokeRect(data.x, data.y, data.w, data.h);
+    //             // this.getFaceBoundingBox(this.img);
+    //           })
+    //           .catch((error) => {
+    //             console.log(error);
+    //           });
+    //     },
+    //     true
+    // );
     // console.log(this.canvasForCaptureContext)
     // this.getFaceBoundingBox(this.img);
   },
@@ -120,9 +120,9 @@ export default {
       //   })
     },
     getFaceBoundingBox: function (imgBase64) {
-      const path = "http://localhost:3000/face_bb";
+      const path = "http://0.0.0.0:3000/face_bb";
       const data = {
-        img: imgBase64,
+        img: imgBase64
       };
       // console.log(imgBase64)
       axios

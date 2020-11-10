@@ -14,7 +14,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.node
-    image: vue_img
     container_name: vue_container
     tty: true
     volumes:
