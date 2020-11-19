@@ -1,5 +1,6 @@
 <template>
   <div class="hello">
+    <h1>HelloWorld</h1>
     <h1>{{ msg }}</h1>
     <h2>Essential Links</h2>
     <ul>
@@ -80,6 +81,9 @@
         </a>
       </li>
     </ul>
+
+    <button v-on:click="moveHome">ボタン</button>
+
   </div>
 </template>
 
@@ -89,6 +93,24 @@ export default {
   data () {
     return {
       msg: 'Welcome to Your Vue.js App'
+    }
+  },
+  mounted(){
+    document.addEventListener(
+      "keydown",
+      this.addKeyEvent
+      );
+  },
+  methods:{
+    moveHome: function(){
+      this.$router.push({name: "Home"}).catch(err => {})
+    },
+    addKeyEvent: function(){
+      const keyName = event.key;
+      if (keyName === " ") {
+        console.log("Keydown in HelloWorld")
+        this.moveHome();
+      }
     }
   }
 }
