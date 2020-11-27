@@ -1,29 +1,22 @@
 <template>
   <div>
-    <Header title="ICTSTORE 利用開始情報登録"></Header>
-    <br>
-    <div>
-      <h2>登録画像プレビュー</h2>
-      <br>
-      <h5>この画像を登録して入店時の顔認証に利用します。</h5>
-      <h5>よろしいですか？</h5>
+    <Header title="ICTSTORE 利用開始情報登録"></Header><br>
+
+    <div class="body">
+      <h2>登録画像プレビュー</h2><br><br>
+      <p>この画像を登録して入店時の顔認証に利用します。</p>
+      <p>よろしいですか？</p>
+      <div class="btn">
+        <v-btn @click="registImageAndMoveUserInfoPage()">
+          登録する
+        </v-btn>
+        <v-btn @click="moveFaceRegistPage()">
+            もう1度撮影する
+        </v-btn>
+      </div>
     </div>
 
-    <v-btn
-        color="primarydark"
-        @click="registImageAndMoveUserInfoPage()"
-        >
-        登録する
-    </v-btn>
-     <v-btn
-        color="primarydark"
-        @click="moveFaceRegistPage()"
-    >
-        もう1度撮影する
-    </v-btn>
-
-    <canvas id="canvas" width="640" height="480"></canvas>
-
+    <canvas id="canvas" width="960" height="720"></canvas>¥
   </div>
 </template>
 
@@ -38,25 +31,22 @@ export default {
     AuthDialog: AuthDialog
   },
   props: {
-    id: undefined,
-    imgData: undefined
+    id: String,
+    imgStrWithHeader: String
   },
   data () {
     return {
-      canvas: {},
-      canvasContext: {},
-      img: undefined
     }
   },
   computed: {
   },
   mounted () {
-    const canvas = document.getElementById('canvas')
-    const canvasContext = canvas.getContext('2d')
-    const img = new Image()
-    img.src = this.imgData
+    let canvas = document.getElementById('canvas')
+    let canvasContext = canvas.getContext('2d')
+    let img = new Image()
+    img.src = this.imgStrWithHeader
     img.onload = function () {
-      canvasContext.drawImage(img, 0, 0, 640, 480)
+      canvasContext.drawImage(img, 0, 0, 960, 720)
     }
   },
   methods: {
@@ -83,10 +73,10 @@ export default {
       // })
     },
     registImage: function () {
-      this.canvas = document.getElementById('canvas-for-capture')
-      this.canvasContext = this.canvas.getContext('2d')
-      this.canvasContext.drawImage(document.getElementById('video'), 0, 0, 640, 480)
-      this.img = this.canvas.toDataURL('image/jpeg')
+      let canvas = document.getElementById('canvas')
+      let canvasContext = canvas.getContext('2d')
+      canvasContext.drawImage(document.getElementById('video'), 0, 0, 960, 720)
+      // const imgStr = canvas.toDataURL('image/jpeg')
 
       // const path = 'http://localhost:5000/regist*****************'
       // const data = { img: this.img }
@@ -108,7 +98,17 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+li {
+  list-style-type: none;
+}
+.body {
+  position: absolute;
+}
+.btn {
+  margin-top: 50px;
+}
 #canvas {
   position: relative;
+  float: right;
 }
 </style>

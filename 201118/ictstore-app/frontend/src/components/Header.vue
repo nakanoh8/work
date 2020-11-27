@@ -1,8 +1,10 @@
 <template>
-  <div class="hello">
-    <h1>{{ title }}</h1>
-
+  <div class="header">
+    <h1 class="title">
+      {{ title }}
+    </h1>
     <v-btn
+      class="btn"
       color="primarydark"
       @click="moveAdminLoginPage()"
       v-if="this.$route.name === 'auth'"
@@ -10,6 +12,7 @@
       管理者ログイン
     </v-btn>
     <v-btn
+      class="btn"
       color="primarydark"
       @click="moveAdminMenuPage()"
       v-if="this.$route.name !== 'auth'"
@@ -17,6 +20,7 @@
       管理者メニュー
     </v-btn>
     <v-btn
+      class="btn"
       color="primarydark"
       @click="moveAuthPage()"
       v-if="this.$route.name !== 'auth'"
@@ -80,5 +84,19 @@ li {
 }
 a {
   color: #42b983;
+}
+/* .btn {
+  display: block;
+  margin: 0 0 0 auto;
+} */
+.title{
+  float: left;
+}
+.btn{
+  float: right;
+  margin: 0 0 0 10px;
+}
+.header{
+  overflow: hidden;
 }
 </style>

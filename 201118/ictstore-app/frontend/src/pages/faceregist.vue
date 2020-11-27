@@ -1,119 +1,146 @@
 <template>
   <div>
-    <Header title="ICTSTORE 利用開始情報登録"></Header>
-    <br>
-    <div>
-      <h2>利用開始情報登録（顔撮影）の手順</h2>
+    <Header title="ICTSTORE 利用開始情報登録"></Header><br>
+
+    <div class="body">
+      <h2>利用開始情報登録（顔撮影）の手順</h2><br><br>
       <ul>
         <li>カメラの枠内に顔を写す</li>
         <li>スペースキーを押下して顔画像を撮影する</li>
-      </ul>
+      </ul><br>
     </div>
 
-    <div class="canvas-wrapper">
-      <!-- <video ref="video" id="video" width="640" height="480" autoplay></video> -->
-      <img id="video" src="@/config/lennon-1.jpg" width="640" height="480">
-      <canvas id="canvas" width="640" height="480"></canvas>
+    <div class="video-wrapper">
+      <video ref="video" id="video" width="960" height="720" autoplay></video>
+      <canvas id="canvas-for-boundingbox" width="960" height="720"></canvas>
     </div>
-    <canvas id="canvas-for-capture" width="640" height="480"></canvas>
+    <canvas id="canvas-for-capture" width="960" height="720"></canvas>
 
     <AuthDialog
       v-on:close="closeFailureFaceDetectionDialog"
       :dialog="failureFaceDetectionDialog"
       :faceDetectionResult="faceDetectionResult"
     ></AuthDialog>
+
+    <NormalDialog
+      :dialog="faceDetectingDialog"
+      :text="faceDetectingDialogText"
+    ></NormalDialog>
   </div>
 </template>
 
 <script>
 import Header from '@/components/Header'
 import AuthDialog from '@/components/AuthDialog'
+import NormalDialog from '@/components/NormalDialog'
 import axios from 'axios'
 
 export default {
   name: 'faceregist',
   components: {
     Header: Header,
-    AuthDialog: AuthDialog
+    AuthDialog: AuthDialog,
+    NormalDialog: NormalDialog
   },
   data () {
     return {
-      video: {},
-      canvas: {},
-      canvasContext: {},
+      // canvas element
+      canvasForBoundingBox: {},
+      contextForBoundingBox: {},
       canvasForCapture: {},
-      canvasForCaptureContext: {},
-      img: undefined,
-      imgDataOnHeader: undefined,
-      imgData: undefined,
+      contextForCapture: {},
+      // detect result
       faceDetectionResult: false,
-      failureFaceDetectionDialog: false
+      // dialog status
+      failureFaceDetectionDialog: false,
+      faceDetectingDialog: false,
+      faceDetectingDialogText: '\n顔を検出しています...\n'
     }
   },
   mounted () {
     // リアルタイムに再生（ストリーミング）させるためにビデオタグに流し込む
-    // this.video = this.$refs.video;
-    // this.video = document.getElementById('video')
-    // if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    //   navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
-    //     this.video.srcObject = stream
-    //     this.video.play()
-    //   })
-    // }
-
+    this.playVideo()
     // スペースキー押下時の処理を追加
-    document.addEventListener('keydown', (event) => {
-      if (event.key !== ' ') { return }
-      if (!this.failureFaceDetectionDialog) {
-        this.detectFaceInVideoCapture()
-      } else {
-        this.closeFailureFaceDetectionDialog()
-      }
-    })
-
-    // this.video.addEventListener(
-    //   'timeupdate',
-    //   function () {
-    //     this.canvasForCapture = document.getElementById('canvas-for-capture')
-    //     this.canvasForCapture.strokeStyle = '#FF0000'
-    //     this.canvasForCaptureContext = this.canvasForCapture.getContext('2d')
-    //     this.canvasForCaptureContext.drawImage(document.getElementById('video'), 0, 0, 640, 480)
-    //     this.img = this.canvasForCapture.toDataURL('image/jpeg').replace(/^.*,/, '')
-
-    //     // 顔枠を取得
-    //     const path = 'http://localhost:5000/boundingbox'
-    //     const data = { img: this.img }
-    //     axios
-    //       .post(path, data)
-    //       .then((response) => {
-    //         const data = response.data
-    //         this.canvas = document.getElementById('canvas')
-    //         this.canvasContext = this.canvas.getContext('2d')
-    //         this.canvasContext.clearRect(0, 0, 640, 480)
-    //         this.canvasContext.strokeRect(data.x, data.y, data.w, data.h)
-    //       })
-    //       .catch((error) => {
-    //         console.log(error)
-    //       })
-    //   },
-    //   true
-    // )
+    document.addEventListener('keydown', this.keydownEvent)
+    //  顔枠の描画を開始する
+    // this.video.addEventListener('timeupdate', this.timeUpdateEvent, true)
+    this.drawBoundingBox()
   },
   methods: {
-    moveFacePreviewPage: function () {
+    playVideo: function () {
+      // リアルタイムに再生（ストリーミング）させるためにビデオタグに流し込む
+      // let video = this.$refs.video
+      let video = document.getElementById('video')
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+          video.srcObject = stream
+          video.play()
+        })
+      }
+    },
+    moveFacePreviewPage: function (imgStrWithHeader) {
       // NavigationDuplicatedエラー回避
       if (this.$route.name !== 'faceregist') { return }
+      // 既存の'keydown'イベントを削除
+      document.removeEventListener('keydown', this.keydownEvent)
+      // カメラを停止
+      let stream = document.getElementById('video').srcObject
+      let tracks = stream.getTracks()
+      tracks.forEach(function (track) {
+        track.stop()
+      })
 
       this.$router.push({
         name: 'facepreview',
         params: {
           id: this.$route.params.id,
-          imgData: this.imgDataOnHeader
+          imgStrWithHeader: imgStrWithHeader
         }
       })
         .catch(error => {
           console.log(error)
         })
+    },
+    keydownEvent: function (event) {
+      if (event.key !== ' ') { return }
+      console.log('Keydown in FaceregistPage')
+      if (!this.failureFaceDetectionDialog) {
+        this.detectFaceOnVideo()
+      } else {
+        this.closeFailureFaceDetectionDialog()
+      }
+    },
+    drawBoundingBox: function () {
+      // 顔枠を取得
+      const path = 'http://localhost:5000/boundingbox'
+      const data = { img: this.captureImgStrOnVideo() }
+      axios
+        .post(path, data)
+        .then((response) => {
+          const data = response.data
+          this.canvasForBoundingBox = document.getElementById('canvas-for-boundingbox')
+          if (this.canvasForBoundingBox === null) return
+          this.contextForBoundingBox = this.canvasForBoundingBox.getContext('2d')
+          this.contextForBoundingBox.clearRect(0, 0, 960, 720)
+          this.contextForBoundingBox.strokeStyle = 'rgb(0, 0, 255)'
+          this.contextForBoundingBox.strokeRect(data.x, data.y, data.w, data.h)
+          this.drawBoundingBox()
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    captureImgStrOnVideo: function () {
+      this.canvasForCapture = document.getElementById('canvas-for-capture')
+      this.contextForCapture = this.canvasForCapture.getContext('2d')
+      this.contextForCapture.drawImage(document.getElementById('video'), 0, 0, 960, 720)
+      return this.canvasForCapture.toDataURL('image/jpeg').replace(/^.*,/, '')
+    },
+    captureImgStrWithHeaderOnVideo: function () {
+      this.canvasForCapture = document.getElementById('canvas-for-capture')
+      this.contextForCapture = this.canvasForCapture.getContext('2d')
+      this.contextForCapture.drawImage(document.getElementById('video'), 0, 0, 960, 720)
+      return this.canvasForCapture.toDataURL('image/jpeg')
     },
     openFailureFaceDetectionDialog: function () {
       this.failureFaceDetectionDialog = true
@@ -121,24 +148,48 @@ export default {
     closeFailureFaceDetectionDialog: function () {
       this.failureFaceDetectionDialog = false
     },
-    detectFaceInVideoCapture: async function () {
-      this.canvasForCapture = document.getElementById('canvas-for-capture')
-      this.canvasForCaptureContext = this.canvasForCapture.getContext('2d')
-      this.canvasForCaptureContext.drawImage(document.getElementById('video'), 0, 0, 640, 480)
-      this.imgDataOnHeader = this.canvasForCapture.toDataURL('image/jpeg')
-      this.imgData = this.imgDataOnHeader.replace(/^.*,/, '')
+    detectFaceOnVideo: async function () {
+      this.faceDetectingDialog = true
 
+      // 顔枠を取得
+      const path = 'http://localhost:5000/boundingbox'
+      const data = { img: this.captureImgStrOnVideo() }
+      axios
+        .post(path, data)
+        .then((response) => {
+          const data = response.data
+          // 取得したContextの画像に顔枠を描画
+          this.contextForCapture.strokeStyle = 'rgb(0, 0, 255)'
+          this.contextForCapture.strokeRect(data.x, data.y, data.w, data.h)
+          const imgStrWithHeader = this.canvasForCapture.toDataURL('image/jpeg')
+          const imgStr = imgStrWithHeader.replace(/^.*,/, '')
+          this.detectFaceOn(imgStr, imgStrWithHeader)
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    detectFaceOn: function (imgStr, imgStrWithHeader) {
       const path = 'http://localhost:5000/facedetection'
-      const data = { img: this.imgData }
+      const data = { img: imgStr }
       axios.post(path, data)
         .then(response => {
-          response.data.faceDetectionResult
-            ? this.moveFacePreviewPage()
+          this.faceDetectingDialog = false
+          response.data.facedetection_result
+            ? this.moveFacePreviewPage(imgStrWithHeader)
             : this.openFailureFaceDetectionDialog()
         })
         .catch(error => {
           console.log(error)
         })
+    },
+    // ローカルへのダウンロード処理(取得画像確認用)
+    downloadImageToLocal: function (imgDataOnHeader) {
+      let dlLink = document.createElement('a')
+      dlLink.href = imgDataOnHeader
+      dlLink.download = 'test.jpg'
+      dlLink.click()
+      dlLink.remove()
     }
   }
 }
@@ -149,18 +200,19 @@ export default {
 li {
   list-style-type: decimal;
 }
-.canvas-wrapper canvas {
+#canvas-for-capture {
+  display: none !important;
+}
+.video-wrapper canvas {
   position: absolute;
   top: 0;
   left: 0;
 }
-.canvas-wrapper canvas {
-  position: absolute;
-}
-.canvas-wrapper {
+.video-wrapper {
   position: relative;
+  float: right;
 }
-#canvas-for-capture {
-  display: none !important;
+.body {
+  position: absolute;
 }
 </style>

@@ -89,8 +89,8 @@ def auth(imgBase64, threshold):
     if faceVector is None:
         # 顔検出失敗
         return {
-            "faceDetectionResult": False,
-            "authResult": False
+            "facedetection_result": False,
+            "auth_result": False
             }
     # 顧客データ（JSON）を取得
     customers_json_path = "/usr/src/app/faceanalysis-api/api/config/customers.json"
@@ -103,22 +103,38 @@ def auth(imgBase64, threshold):
         if d <= threshold:
             # 認証成功
             return { 
-                "faceDetectionResult": True,
-                "authResult": True, 
+                "facedetection_result": True,
+                "auth_result": True, 
                 "customer_id": customer["customer_id"],
                 "face_distance": str(d)
                 }
     # 認証失敗
     return { 
-        "faceDetectionResult": True,
-        "authResult": False,
+        "facedetection_result": True,
+        "auth_result": False,
         }
 
 #------------------------------------
 # 顔枠の座標を取得する
 #------------------------------------
-def boundingbox(arr):
-    return np.array(arr)
+def boundingbox(imgBase64):
+    imgBinary = base64.b64decode(imgBase64)
+    imgJpg = np.frombuffer(imgBinary, dtype=np.uint8)
+    #raw image <- jpg
+    bgrImg = cv2.imdecode(imgJpg, cv2.IMREAD_COLOR)
+    if bgrImg is None:
+        return {"x": 0, "y": 0, "w": 0, "h": 0}
+
+    rgbImg = cv2.cvtColor(bgrImg, cv2.COLOR_BGR2RGB)
+    bb = align.getLargestFaceBoundingBox(rgbImg)
+    if bb is None:
+        return {"x": 0, "y": 0, "w": 0, "h": 0}
+    return {
+        "x": bb.left(), 
+        "y": bb.top(), 
+        "w": bb.right() - bb.left(), 
+        "h": bb.bottom() - bb.top()
+        }
 
 #------------------------------------
 # 認証画像を保存する
@@ -131,13 +147,13 @@ def saveImage(imgBase64, dir, authResult):
     if img is None:
         raise Exception("画像を読み込めませんでした。")
 
-    if not authResult["authResult"] and not authResult["faceDetectionResult"]:
-        fileName = "ng_facedetection_" + date.today() + ".jpg"
+    if not authResult["auth_result"] and not authResult["facedetection_result"]:
+        fileName = "ng_facedetection_{}.jpg".format(date.today())
 
-    elif not authResult["authResult"] and authResult["faceDetectionResult"]:
-        fileName = "ng_auth_" + date.today() + ".jpg"
+    elif not authResult["auth_result"] and authResult["facedetection_result"]:
+        fileName = "ng_auth_{}.jpg".format(date.today())
 
-    elif authResult["authResult"] and authResult["faceDetectionResult"]:
+    elif authResult["auth_result"] and authResult["facedetection_result"]:
         fileName = "ok_auth_{}_{}.jpg".format(authResult["customer_id"], date.today())
 
     print(dir +"/"+ fileName)
@@ -149,5 +165,5 @@ def saveImage(imgBase64, dir, authResult):
 def contains_face_in(imgBase64):
     faceVector = to_face_vector(imgBase64)
     if faceVector is None:
-        return { "faceDetectionResult": False }
-    return { "faceDetectionResult": True }
+        return { "facedetection_result": False }
+    return { "facedetection_result": True }
