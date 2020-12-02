@@ -1,0 +1,7 @@
+{
+    "editor.formatOnSave": true,
+    "eslint.options": {
+      "extensions": [".js", ".vue"]
+    },
+    "eslint.validate": ["javascript", "vue"]
+  }

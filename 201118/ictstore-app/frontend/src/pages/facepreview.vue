@@ -72,7 +72,7 @@ export default {
       //   console.log(error)
       // })
     },
-    registImage: function () {
+    registImage: function(){
       let canvas = document.getElementById('canvas')
       let canvasContext = canvas.getContext('2d')
       canvasContext.drawImage(document.getElementById('video'), 0, 0, 960, 720)
