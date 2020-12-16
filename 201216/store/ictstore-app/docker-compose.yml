@@ -1,0 +1,24 @@
+version: '3'
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    image: frontend_img
+    container_name: frontend_container
+    tty: true
+    volumes:
+      - ./:/usr/src/app
+    ports:
+      - "8000:8000"
+  faceanalysis:
+    build:
+      context: .
+      dockerfile: Dockerfile.faceanalysis
+    image: faceanalysis_img
+    container_name: faceanalysis_container
+    tty: true
+    volumes:
+      - ./:/usr/src/app
+    ports:
+      - "5000:5000"
