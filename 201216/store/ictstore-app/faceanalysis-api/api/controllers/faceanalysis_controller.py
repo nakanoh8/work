@@ -25,7 +25,7 @@ def auth():
                     )
     # print("result_json", result_json)
     # 認証画像を保存
-    faceanalysis.save_authimage(data["image"], config["auth_images_dir"], result_json)
+    # faceanalysis.save_authimage(data["image"], config["auth_images_dir"], result_json)
     # レスポンス整形
     response = make_response(result_json) 
 

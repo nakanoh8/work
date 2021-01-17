@@ -26,7 +26,7 @@ openfaceModelDir = os.path.join(modelDir, 'openface')
 # 利用するModelを設定
 parser = argparse.ArgumentParser()
 parser.add_argument('--dlibFacePredictor', type=str, help="Path to dlib's face predictor.",
-                    default=os.path.join(dlibModelDir, "shape_predictor_68_face_landmarks.dat"))
+                    default=os.path.join(dlibModelDir, "shape_predictor_5_face_landmarks.dat"))
 parser.add_argument('--networkModel', type=str, help="Path to Torch network model.",
                     default=os.path.join(openfaceModelDir, 'nn4.small2.v1.t7'))
 parser.add_argument('--imgDim', type=int,
@@ -78,6 +78,7 @@ def face_vector(rgbImg, faceBoundingBox):
     # 顔のランドマークを抽出
     alignedFace = align.align(args.imgDim, rgbImg, faceBoundingBox,
                               landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+    print(alignedFace)
     if alignedFace is None:
         raise Exception("Unable to align image: {}".format(imgPath))
     # ランドマークから顔ベクトルを抽出
@@ -114,17 +115,37 @@ def auth(imgBase64, threshold):
     # NG: Noneを返却
     rgbImg = load_rgbimg(imgBase64)
     faceBoundingBox = face_boundingbox(rgbImg)
+
+    # alignedFace = align.align(args.imgDim, rgbImg, faceBoundingBox,
+    #                           landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+    landmark = align.findLandmarks(rgbImg, faceBoundingBox)
+    # print(type(align))
+    # print(type(alignedFace))
+    # print(type(imgBase64))
+    # print(type(rgbImg))
+    # result, alignedFace_data = cv2.imencode('.jpg', alignedFace)
+    # alignedFace_base64 = base64.b64encode(alignedFace_data).decode("utf-8")
+    # print(type(alignedFace_base64))
+    # print(alignedFace_base64)
+    authImagesPath = "/usr/src/app/report/auth-images"
+
+    save_authimage(imgBase64, authImagesPath, { 
+                "facedetection_result": True,
+                "auth_result": True, 
+                "user_id": None,
+                "face_distance": 0
+                }, landmark)
+                
     faceVector = face_vector(rgbImg, faceBoundingBox)
     if faceVector is None:
         # 顔検出失敗
-        save_analysis_info(rgbImg, faceBoundingBox, faceVector, False, None)
+        # save_analysis_info(rgbImg, faceBoundingBox, faceVector, False, None)
         return {
             "facedetection_result": False,
             "auth_result": False
             }
     
     # 顧客データ（JSON）を取得
-
     # TODO storeInfoAPI完成、かつデータ登録後に実装
     # response = requests.get("http://localhost:8083/storeInfo/authVectors/")
     # authVectors = response.json()
@@ -144,8 +165,7 @@ def auth(imgBase64, threshold):
             #     input_img_vec,
             #     True,
             #     user["user_id"])
-            save_analysis_info(rgbImg, faceBoundingBox, faceVector, True, user["user_id"])
-
+            # save_analysis_info(rgbImg, faceBoundingBox, faceVector, True, user["user_id"])
             return { 
                 "facedetection_result": True,
                 "auth_result": True, 
@@ -153,7 +173,7 @@ def auth(imgBase64, threshold):
                 "face_distance": str(d)
                 }
     # 認証失敗
-    save_analysis_info(rgbImg, faceBoundingBox, faceVector, False, None)
+    # save_analysis_info(rgbImg, faceBoundingBox, faceVector, False, None)
     return { 
         "facedetection_result": True,
         "auth_result": False,
@@ -186,10 +206,14 @@ def face_boundingbox_for_display(bb):
 #------------------------------------
 # [public] 認証画像を保存する
 #------------------------------------
-def save_authimage(imgBase64, dir, authResult):
+def save_authimage(imgBase64, dir, authResult, landmark):
     bgrImg = load_bgrimg(imgBase64)
     if bgrImg is None:
         raise Exception("画像を読み込めませんでした。")
+
+    # ランドマーク描画
+    for (i, (x, y)) in enumerate(landmark):
+        cv2.circle(bgrImg, (x, y), 1, (255, 0, 0), -1)
 
     currentTime = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
