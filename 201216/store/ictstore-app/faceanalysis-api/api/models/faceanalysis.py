@@ -26,7 +26,7 @@ openfaceModelDir = os.path.join(modelDir, 'openface')
 # 利用するModelを設定
 parser = argparse.ArgumentParser()
 parser.add_argument('--dlibFacePredictor', type=str, help="Path to dlib's face predictor.",
-                    default=os.path.join(dlibModelDir, "shape_predictor_5_face_landmarks.dat"))
+                    default=os.path.join(dlibModelDir, "shape_predictor_68_face_landmarks.dat"))
 parser.add_argument('--networkModel', type=str, help="Path to Torch network model.",
                     default=os.path.join(openfaceModelDir, 'nn4.small2.v1.t7'))
 parser.add_argument('--imgDim', type=int,
