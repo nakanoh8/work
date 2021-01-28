@@ -14,6 +14,8 @@ import datetime
 import pathlib
 import csv
 
+import face_alignment
+
 
 share_dirpath = "/usr/src/app/share/"
 
@@ -38,6 +40,12 @@ args = parser.parse_args()
 align = openface.AlignDlib(args.dlibFacePredictor)
 # 顔ベクトル抽出に利用
 net = openface.TorchNeuralNet(args.networkModel, args.imgDim)
+
+fa = face_alignment.FaceAlignment(
+        face_alignment.LandmarksType._2D,
+        device='cpu'
+    )
+# print(face_alignment.LandmarksType._2D)
 
 #------------------------------------
 # 画像読み込み(BGRデータ)
@@ -66,6 +74,7 @@ def load_rgbimg(imgBase64):
     rgbImg = cv2.cvtColor(bgrImg, cv2.COLOR_BGR2RGB)
 
     return rgbImg
+    
 
 #------------------------------------
 # [public] 顔ベクトル変換
@@ -73,17 +82,31 @@ def load_rgbimg(imgBase64):
 def face_vector(rgbImg, faceBoundingBox):
     if rgbImg is None:
         return None
-    if faceBoundingBox is None:
-        return None
+    # if faceBoundingBox is None:
+    #     return None
     # 顔のランドマークを抽出
-    alignedFace = align.align(args.imgDim, rgbImg, faceBoundingBox,
-                              landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-    print(alignedFace)
+    alignedFace = align.align(args.imgDim, rgbImg, [],
+                              landmarks=to_array(fa.get_landmarks_from_image(rgbImg)[0]), landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+    # print(">>>>alignedFace")
+    # print(fa.get_landmarks_from_image(rgbImg)[0])
     if alignedFace is None:
-        raise Exception("Unable to align image: {}".format(imgPath))
+        raise Exception("Unable to align image")
     # ランドマークから顔ベクトルを抽出
     rep = net.forward(alignedFace)
     return to_array(rep)
+
+def contains_face(rgbImg):
+    if rgbImg is None:
+        return None
+    # 顔のランドマークを抽出
+    alignedFace = align.align(args.imgDim, rgbImg, None,
+                              landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+    # print(alignedFace)
+    return alignedFace is not None
+
+    # face_landmarks = fa.get_landmarks_from_image(rgbImg)
+    # print(type(fa))
+    # return face_landmarks is not None
 
 #------------------------------------
 # 顔ベクトル間の距離を取得
@@ -118,8 +141,10 @@ def auth(imgBase64, threshold):
 
     # alignedFace = align.align(args.imgDim, rgbImg, faceBoundingBox,
     #                           landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
-    landmark = align.findLandmarks(rgbImg, faceBoundingBox)
-    # print(type(align))
+    # landmark = align.findLandmarks(rgbImg, faceBoundingBox)
+    landmark = to_array(fa.get_landmarks_from_image(rgbImg)[0])
+    # print(type(landmark))
+    # print(landmark)
     # print(type(alignedFace))
     # print(type(imgBase64))
     # print(type(rgbImg))
@@ -188,6 +213,9 @@ def face_boundingbox(rgbImg):
     if rgbImg is None:
         return None
     return align.getLargestFaceBoundingBox(rgbImg)
+    # if contains_face(rgbImg):
+    #     return True
+    # return None
 
 #------------------------------------
 # [public] 顔範囲情報(カメラへの顔枠描画用に加工したもの)を取得する
@@ -195,6 +223,8 @@ def face_boundingbox(rgbImg):
 def face_boundingbox_for_display(bb):
     if bb is None:
         return {"x": 0, "y": 0, "w": 0, "h": 0}
+    if bb is not None:
+        return {"x": 100, "y": 100, "w": 300, "h": 300}
 
     return {
         "x": bb.left(), 
@@ -213,7 +243,7 @@ def save_authimage(imgBase64, dir, authResult, landmark):
 
     # ランドマーク描画
     for (i, (x, y)) in enumerate(landmark):
-        cv2.circle(bgrImg, (x, y), 1, (255, 0, 0), -1)
+        cv2.circle(bgrImg, (int(x), int(y)), 1, (255, 0, 0), -1)
 
     currentTime = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -311,3 +341,15 @@ def save_analysis_info(rgbImg, face_rect, face_vector, result, result_id):
     bgrImg = cv2.cvtColor(rgbImg, cv2.COLOR_RGB2BGR)
     cv2.rectangle(bgrImg, (face_rect.left(), face_rect.top()), (face_rect.right(), face_rect.bottom()), (255, 0, 0))
     cv2.imwrite(str(saveDir.joinpath(recog_id + ".png")), bgrImg)
+
+
+print("test")
+img = cv2.imread("/usr/src/app/faceanalysis-api/api/config/users_image/lennon-2.jpg")
+rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+# print(rgb)
+print(face_vector(rgb, []))
+# print(fa.face_alignment_net)
+height, width, channels = img.shape[:3]
+print("width: " + str(width))
+print("height: " + str(height))
+print("channels: " + str(channels))

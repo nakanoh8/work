@@ -141,6 +141,8 @@ export default {
         })
         .catch(error => {
           console.log(error)
+          console.log('Reload!!!!')
+          this.$router.go({path: this.$router.currentRoute.path, force: true})
         })
     },
     openStore: function (userId) {
