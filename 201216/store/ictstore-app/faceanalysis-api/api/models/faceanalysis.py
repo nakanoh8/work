@@ -29,8 +29,10 @@ openfaceModelDir = os.path.join(modelDir, 'openface')
 parser = argparse.ArgumentParser()
 parser.add_argument('--dlibFacePredictor', type=str, help="Path to dlib's face predictor.",
                     default=os.path.join(dlibModelDir, "shape_predictor_68_face_landmarks.dat"))
+# parser.add_argument('--networkModel', type=str, help="Path to Torch network model.",
+#                     default=os.path.join(openfaceModelDir, 'nn4.v1.t7'))
 parser.add_argument('--networkModel', type=str, help="Path to Torch network model.",
-                    default=os.path.join(openfaceModelDir, 'nn4.small2.v1.t7'))
+                    default=os.path.join(openfaceModelDir, 'nn4.small2.3d.v1.t7'))
 parser.add_argument('--imgDim', type=int,
                     help="Default image dimension.", default=96)
 parser.add_argument('--verbose', action='store_true')
@@ -41,10 +43,11 @@ align = openface.AlignDlib(args.dlibFacePredictor)
 # 顔ベクトル抽出に利用
 net = openface.TorchNeuralNet(args.networkModel, args.imgDim)
 
-fa = face_alignment.FaceAlignment(
-        face_alignment.LandmarksType._2D,
-        device='cpu'
-    )
+# fa = face_alignment.FaceAlignment(
+#         face_alignment.LandmarksType._2D,
+#         device='cpu'
+#     )
+fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cpu', flip_input=False)
 # print(face_alignment.LandmarksType._2D)
 
 #------------------------------------
@@ -82,11 +85,14 @@ def load_rgbimg(imgBase64):
 def face_vector(rgbImg, faceBoundingBox):
     if rgbImg is None:
         return None
-    # if faceBoundingBox is None:
-    #     return None
+    if faceBoundingBox is None:
+        return None
     # 顔のランドマークを抽出
-    alignedFace = align.align(args.imgDim, rgbImg, [],
-                              landmarks=to_array(fa.get_landmarks_from_image(rgbImg)[0]), landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+    # alignedFace = align.align(args.imgDim, rgbImg, [],
+    #                           landmarks=to_array(fa.get_landmarks_from_image(rgbImg)[0]), 
+    #                           landmarkIndices=openface.AlignDlib.OUTER_EYES_AND_NOSE)
+    alignedFace = align.align(args.imgDim, rgbImg, faceBoundingBox,
+                              landmarkIndices=openface.AlignDlib.INNER_EYES_AND_BOTTOM_LIP)
     # print(">>>>alignedFace")
     # print(fa.get_landmarks_from_image(rgbImg)[0])
     if alignedFace is None:
@@ -247,6 +253,7 @@ def save_authimage(imgBase64, dir, authResult, landmark):
 
     currentTime = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
 
+
     if not authResult["auth_result"] and not authResult["facedetection_result"]:
         fileName = "failure_facedetection_{}.jpg".format(currentTime)
 
@@ -346,10 +353,23 @@ def save_analysis_info(rgbImg, face_rect, face_vector, result, result_id):
 print("test")
 img = cv2.imread("/usr/src/app/faceanalysis-api/api/config/users_image/lennon-2.jpg")
 rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+faceBoundingBox = face_boundingbox(rgb)
+# landmark = align.findLandmarks(rgb, faceBoundingBox)
+# print(landmark)
+# print(fa.get_landmarks_from_image(rgb)[0])
+faceVector1 = face_vector(rgb, faceBoundingBox)
+# print(to_array(fa.get_landmarks_from_image(rgb)[0]))
+img2 = cv2.imread("/usr/src/app/faceanalysis-api/api/config/users_image/lennon-2s.jpg")
+rgb2 = cv2.cvtColor(img2, cv2.COLOR_BGR2RGB)
 # print(rgb)
-print(face_vector(rgb, []))
+faceBoundingBox2 = face_boundingbox(rgb2)
+# print(fa.get_landmarks_from_image(rgb)[0])
+faceVector2 = face_vector(rgb2, faceBoundingBox2)
+# print(faceVector2)
+# print(face_vector(rgb, faceBoundingBox))
 # print(fa.face_alignment_net)
-height, width, channels = img.shape[:3]
-print("width: " + str(width))
-print("height: " + str(height))
-print("channels: " + str(channels))
+# height, width, channels = img.shape[:3]
+# print("width: " + str(width))
+# print("height: " + str(height))
+# print("channels: " + str(channels))
+print(distance(faceVector1, faceVector2))
