@@ -13,6 +13,7 @@
     <div class="video-wrapper">
       <video ref="video" id="video" width="960" height="720" autoplay></video>
       <canvas id="canvas-for-boundingbox" width="960" height="720"></canvas>
+      <canvas id="canvas-for-faceframe" width="960" height="720"></canvas>
     </div>
     <canvas id="canvas-for-capture" width="960" height="720"></canvas>
 
@@ -69,6 +70,25 @@ export default {
     document.addEventListener('keydown', this.keydownEvent)
     //  顔枠の描画を開始する
     this.drawFaceBoundingBox()
+
+    // 顔枠(固定)を描画
+    let img = new Image()
+    img.src = 'static/images/2.png'
+    img.onload = function () {
+      const canvas = document.getElementById('canvas-for-faceframe')
+      const context = canvas.getContext('2d')
+      context.drawImage(
+        img,
+        0,
+        0,
+        600,
+        600,
+        (960-config.faceframe_size)/2,
+        (720-config.faceframe_size)/2,
+        config.faceframe_size,
+        config.faceframe_size
+        )
+    }
   },
   methods: {
     keydownEvent: function () {
@@ -109,6 +129,19 @@ export default {
           this.contextForBoundingBox.strokeStyle = 'rgb(0, 0, 255)'
           this.contextForBoundingBox.clearRect(0, 0, 960, 720)
           this.contextForBoundingBox.strokeRect(data.x, data.y, data.w, data.h)
+
+          // // 顔枠(固定)を描画
+          // let img = new Image()
+          // img.src = 'static/images/2.png'
+          // img.onload = function () {
+          //   const canvasForBoundingBox = document.getElementById('canvas-for-boundingbox')
+          //   const contextForBoundingBox = canvasForBoundingBox.getContext('2d')
+          //   // contextForBoundingBox.drawImage(img, 0, 0, 1104, 1040, 100, 50, 800, 800)
+          //   // contextForBoundingBox.drawImage(img, 0, 0, 1200, 1200, 260, 100, 500, 500)
+          //   contextForBoundingBox.drawImage(img, 0, 0, 600, 600, 280, 150, 400, 400)
+          //   // contextForBoundingBox.drawImage(img, 0, 0, 1104, 1040, 100, 50, 800, 800)
+          // }
+
           this.drawFaceBoundingBox()
         })
         .catch((error) => {

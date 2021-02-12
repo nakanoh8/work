@@ -229,8 +229,8 @@ def face_boundingbox(rgbImg):
 def face_boundingbox_for_display(bb):
     if bb is None:
         return {"x": 0, "y": 0, "w": 0, "h": 0}
-    if bb is not None:
-        return {"x": 100, "y": 100, "w": 300, "h": 300}
+    # if bb is not None:
+    #     return {"x": 100, "y": 100, "w": 300, "h": 300}
 
     return {
         "x": bb.left(), 
