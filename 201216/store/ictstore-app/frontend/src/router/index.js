@@ -58,12 +58,12 @@ const router = new Router({
   ]
 })
 
-router.beforeEach((to, from, next) => {
-  if (to.matched.some(page => page.meta.isPublic) || Store.state.userNo) {
-    next()
-  } else {
-    next('/adminlogin')
-  }
-})
+// router.beforeEach((to, from, next) => {
+//   if (to.matched.some(page => page.meta.isPublic) || Store.state.userNo) {
+//     next()
+//   } else {
+//     next('/adminlogin')
+//   }
+// })
 
 export default router

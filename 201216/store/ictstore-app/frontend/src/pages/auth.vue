@@ -73,8 +73,9 @@ export default {
 
     // 顔枠(固定)を描画
     let img = new Image()
-    img.src = 'static/images/2.png'
+    img.src = '/static/images/2.png'
     img.onload = function () {
+      console.log(img.src)
       const canvas = document.getElementById('canvas-for-faceframe')
       const context = canvas.getContext('2d')
       context.drawImage(
