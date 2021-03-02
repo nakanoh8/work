@@ -1,0 +1,13 @@
+version: '3'
+services:
+  faceanalysis-facerecog:
+    build:
+      context: .
+      dockerfile: Dockerfile.faceanalysis-facerecog
+    image: faceanalysis-facerecog_img
+    container_name: faceanalysis-facerecog_container
+    tty: true
+    volumes:
+      - ./:/usr/src/app
+    ports:
+      - "5000:5000"
